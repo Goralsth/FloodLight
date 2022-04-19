@@ -1,0 +1,37 @@
+---
+title: "Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(FloodLight)
+library(Seurat)
+library(SeuratData)
+SeuratData::InstallData("pbmc3k")
+ref<-pbmc3k@assays$RNA@counts
+cluster_ID<- pbmc3k@meta.data
+as.data.frame(cluster_ID)
+```
+
+```{r}
+spots<-generate_spots(ref, cluster_ID)
+Markers<-find_markers(ref)
+Markers<-marker_column_names(cluster_ID,"seurat_annotations",ref)
+Markers_Thresholded<-thresholding_markers(Markers, 0.6)
+Subset_Counts<-Subset_Expression(Markers_Thresholded,ref, 1.5)
+deconvolute_using_NNLS(Subset_Counts,spots)
+
+```
+
+

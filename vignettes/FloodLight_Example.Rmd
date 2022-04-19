@@ -1,0 +1,74 @@
+---
+title: "Untitled"
+author: "Thomas Goralski"
+date: '2022-03-31'
+output: html_document
+---
+The below workflow recapitualtes part of SPOTlights validation workflow, but uses floodlight deconvolution instead. 
+```{r}
+#Import data
+library(TabulaMurisSenisData)
+sce <- TabulaMurisSenisDroplet(tissues = "Kidney")$Kidney
+
+# Keep cells from 18m mice
+sce <- sce[, sce$age == "18m"]
+# Keep cells with clear cell type annotations
+sce <- sce[, !sce$free_annotation %in% c("nan", "CD45")]
+
+
+data<-sce@assays@data@listData[["counts"]]
+
+cell_types<-sce$free_annotation
+```
+
+
+
+
+
+
+```{r}
+#Generate average expression profile 
+cluster_centers<-average_expression(data, cell_types)
+
+#generate Spots
+spots_final2<- generate_spots(data, cell_types)
+
+#deconvolute spots
+decon_answer5<-deconvolute_using_NNLS(cluster_centers, spots_final2[["spots"]])
+
+#Get your answer key
+decon_answer_key5<-spots_final2[["cell_types"]]
+
+#calculate mean squared error
+mean(colSums(decon_answer_key5- decon_answer5)^2)
+
+#get residual of known vs predicted
+residual<- (decon_answer_key5-decon_answer5)
+
+#get correlation matrix 
+correlation<-cor(decon_answer_key5, decon_answer5)
+plotCorrelationMatrix(correlation)
+
+#Plot correlation matrix
+heatmap(correlation)
+
+```
+
+```{r}
+ heatmap(t(residual))
+
+```
+
+
+
+
+
+
+
+
+```{r}
+ggplot()+geom_point(aes(x=vec8, y=vec7))
+```
+
+
+
